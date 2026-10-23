@@ -120,6 +120,35 @@ ip netns pids routerA                              # processi che girano nel nam
 
 Nel laboratorio le interfacce hanno questi nomi: `hA-rA` e `rA-hA` (cavo tra `hostA` e `routerA`), `rA-pub` e `rB-pub` (segmento pubblico), `rB-hB` e `hB-rB` (cavo tra `routerB` e `hostB`).
 
+## Esperimento facoltativo: l'MTU del tunnel
+
+Incapsulare un pacchetto aggiunge byte, quindi dentro il tunnel il pacchetto originale può essere più piccolo di quello che passa sul collegamento fisico (MTU 1500).
+
+| Tunnel | Byte aggiunti | MTU dell'interfaccia del tunnel |
+|---|---|---|
+| IPIP | 20 | 1480 |
+| GRE | 24 | 1476 |
+| WireGuard | circa 60-80 | 1420 (valore predefinito) |
+
+Per vederlo, con il tunnel IPIP attivo:
+
+```bash
+# MTU dell'interfaccia del tunnel
+ip -n routerA link show tun0
+
+# Ping "da 1500 byte" che vieta la frammentazione (-M do):
+# 1472 di dati + 28 di intestazioni ICMP e IP = 1500, quindi NON passa
+sudo ip netns exec hostA ping -c1 -M do -s 1472 10.0.2.10
+
+# 1452 + 28 = 1480, quindi passa
+sudo ip netns exec hostA ping -c1 -M do -s 1452 10.0.2.10
+```
+
+Il valore di `-s` è la parte di dati del ping: per trovare il limite si sottraggono 28 byte all'MTU (GRE: 1448, WireGuard: 1392). Il router non può inoltrare il pacchetto troppo grande, né frammentarlo perché `-M do` lo vieta, quindi lo scarta e avvisa `hostA` con un messaggio ICMP. È la causa tipica delle VPN reali in cui il ping funziona ma i trasferimenti grandi si bloccano.
+
+
+
+
 ## Cose da sapere
 
 - Il laboratorio è solo didattico: le chiavi create da `vpn-lab-wireguard.sh` in `./chiavi-wg` servono per l'esperimento e non vanno riutilizzate altrove.
