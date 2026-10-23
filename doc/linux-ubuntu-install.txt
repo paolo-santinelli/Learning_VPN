@@ -1,0 +1,47 @@
+18/03/2024	Wireguard Ubuntu how To Install and configure  
+
+References:
+https://serverspace.io/support/help/how-to-install-wireguard-vpn-client-on-ubuntu-linux/
+https://help.mikrotik.com/docs/display/ROS/WireGuard#WireGuard-Windows10configuration
+
+
+how to Install and configure wireguard client in to Ubuntu
+#
+	$ sudo apt-get update && sudo apt-get upgrade
+	$ sudo apt-get install wireguard
+
+Generating Private and Public Keys
+
+	$ wg genkey | tee private.key | wg pubkey > public.key
+
+After that, create a client configuration file, in the following directory:
+
+	$ sudo nano /etc/wireguard/wg0.conf
+-----------------------------------------------------
+
+configuration file content: (template to personalize) 
+
+[Interface]
+PrivateKey = your_autiogenerated_privat_key=
+Address = 192.168.100.2/24
+DNS = 192.168.100.1
+ 
+[Peer]
+PublicKey = Peer_public_KEY=
+AllowedIPs = 0.0.0.0/0
+Endpoint = example.com:13231
+---------------------------------------------------
+
+
+WireGuard Startup
+
+	$ sudo wg-quick up wg0
+
+To find out the connection status, run the following command:
+
+	$ sudo wg show
+
+To stop the connection, type the following command:
+
+	$ sudo wg-quick down wg0
+
